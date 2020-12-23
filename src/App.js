@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import axios from 'axios'
 
 const useField = (type) => {
@@ -17,8 +17,24 @@ const useField = (type) => {
 
 const useCountry = (name) => {
   const [country, setCountry] = useState(null)
+  const didMount = useRef(false);
 
-  useEffect()
+  useEffect(() => {
+ 
+    if (didMount.current) {
+      axios
+      .get(`https://restcountries.eu/rest/v2/name/${name}?fullText=true`)
+      .then(response => {
+        setCountry({...response.data[0], found: true})
+      })
+      .catch((err) => {
+        setCountry({})
+      })
+    } else {
+      didMount.current = true;
+    }
+  
+  }, [name])
 
   return country
 }
@@ -36,14 +52,19 @@ const Country = ({ country }) => {
     )
   }
 
-  return (
-    <div>
-      <h3>{country.data.name} </h3>
-      <div>capital {country.data.capital} </div>
-      <div>population {country.data.population}</div> 
-      <img src={country.data.flag} height='100' alt={`flag of ${country.data.name}`}/>  
-    </div>
-  )
+  if (country) {
+    return (
+      <div>
+        <h3>{country.name} </h3>
+        <div>capital {country.capital} </div>
+        <div>population {country.population}</div> 
+        <img src={country.flag} height='100' alt={`flag of ${country.name}`}/>  
+      </div>
+    )
+  }
+
+
+
 }
 
 const App = () => {
@@ -53,6 +74,9 @@ const App = () => {
 
   const fetch = (e) => {
     e.preventDefault()
+    if (country) {
+      country.found = false
+    }
     setName(nameInput.value)
   }
 
@@ -64,6 +88,8 @@ const App = () => {
       </form>
 
       <Country country={country} />
+
+      <button onClick={()=>console.log(country)}>log</button>
     </div>
   )
 }
